@@ -17,32 +17,10 @@ interface Periferico {
   local?: string;
 }
 
-// Dados de exemplo para teste
-const dadosExemplo = [
-  {
-    sn: "CAM123",
-    tipo: "Câmera",
-    data: "2024-03-25",
-    ocomon: "OCO123",
-    tecnico: "João Silva",
-    uncp: "58",
-    status: "instalado",
-    patrimonio: "PAT123",
-    local: "Sala 1"
-  }
-];
-
 export default function ConsultarPage() {
   const [uncp, setUncp] = useState('');
   const [perifericos, setPerifericos] = useState<Periferico[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Função para adicionar dados de teste
-  const adicionarDadosTeste = () => {
-    localStorage.setItem('perifericos', JSON.stringify(dadosExemplo));
-    toast.success('Dados de teste adicionados');
-    console.log('Dados adicionados ao localStorage:', dadosExemplo);
-  };
 
   const buscarPerifericos = () => {
     if (!uncp.trim()) {
@@ -52,31 +30,33 @@ export default function ConsultarPage() {
 
     setIsLoading(true);
     try {
-      // Buscar dados do localStorage
-      const perifericosStorage = localStorage.getItem('perifericos');
-      console.log('Conteúdo bruto do localStorage:', perifericosStorage);
+      // Buscar dados de todas as chaves do localStorage
+      const cameraItems = JSON.parse(localStorage.getItem('cameraItems') || '[]');
+      const cardReaderItems = JSON.parse(localStorage.getItem('cardReaderItems') || '[]');
+      const ecpfItems = JSON.parse(localStorage.getItem('ecpfItems') || '[]');
+      const biometricsItems = JSON.parse(localStorage.getItem('biometricsItems') || '[]');
 
-      if (!perifericosStorage) {
-        console.log('Nenhum dado encontrado no localStorage');
-        toast.error('Nenhum dado encontrado no sistema');
-        setIsLoading(false);
-        return;
-      }
+      // Combinar todos os itens
+      const todosOsItens = [
+        ...cameraItems,
+        ...cardReaderItems,
+        ...ecpfItems,
+        ...biometricsItems
+      ];
 
-      const todosPerifericosInstalados = JSON.parse(perifericosStorage);
-      console.log('Dados parseados:', todosPerifericosInstalados);
+      console.log('Todos os itens:', todosOsItens);
 
       // Normaliza o número da UNCP removendo zeros à esquerda
       const uncpNormalizado = uncp.trim().replace(/^0+/, '');
       console.log('UNCP buscada (normalizada):', uncpNormalizado);
 
-      // Filtra os periféricos
-      const perifericosDaUncp = todosPerifericosInstalados.filter((p: Periferico) => {
+      // Filtra os periféricos apenas pela UNCP
+      const perifericosDaUncp = todosOsItens.filter((p: Periferico) => {
         const uncpPerifericoNormalizado = String(p.uncp).replace(/^0+/, '');
         console.log('Comparando:', {
           'UNCP do periférico': uncpPerifericoNormalizado,
           'UNCP buscada': uncpNormalizado,
-          'Corresponde?': uncpPerifericoNormalizado === uncpNormalizado
+          'Tipo': p.tipo
         });
         return uncpPerifericoNormalizado === uncpNormalizado;
       });
@@ -189,14 +169,6 @@ export default function ConsultarPage() {
       
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-6">Consultar Periféricos por UNCP</h1>
-        
-        <button 
-          onClick={adicionarDadosTeste}
-          style={{ backgroundColor: '#90EE90' }}
-          className="mb-4 px-4 py-2 text-white rounded-lg transition-opacity hover:opacity-80"
-        >
-          Adicionar Dados de Teste
-        </button>
 
         <div className="flex gap-4 max-w-md">
           <div className="flex-1">

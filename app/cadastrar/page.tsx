@@ -215,7 +215,9 @@ export default function CadastrarPage() {
       data: formData.get('data') as string,
       ocomon: formData.get('ocomon') as string,
       motivo: formData.get('motivo') as MotivoDaTroca,
-      observacao: formData.get('observacao') as string
+      observacao: formData.get('observacao') as string,
+      tipo: 'Câmera' as TipoPeriferico,
+      tecnico: loggedInUser
     };
 
     try {
@@ -1005,38 +1007,38 @@ export default function CadastrarPage() {
         </div>
 
         <div>
-          <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="sn" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Número de Série
           </label>
           <input
             type="text"
-            id="serialNumber"
-            name="serialNumber"
+            id="sn"
+            name="sn"
             className="input-field mt-1"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="installDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="data" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Data da Instalação
           </label>
           <input
             type="date"
-            id="installDate"
-            name="installDate"
+            id="data"
+            name="data"
             className="input-field mt-1"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="motivoTroca" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Motivo da Troca
           </label>
           <select
-            id="motivoTroca"
-            name="motivoTroca"
+            id="motivo"
+            name="motivo"
             className="input-field mt-1"
             required
           >
