@@ -129,10 +129,10 @@ export default function ConsultarPage() {
     tipo: string; 
     items: Periferico[] 
   }) => (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="bg-white rounded-lg shadow-lg">
       <div 
         style={{ backgroundColor: '#90EE90' }} 
-        className="p-4 cursor-pointer"
+        className="p-4 cursor-pointer rounded-t-lg"
         onClick={() => setExpandedCards(prev => ({ ...prev, [tipo]: !prev[tipo] }))}
       >
         <div className="flex items-center justify-between">
@@ -149,7 +149,14 @@ export default function ConsultarPage() {
           )}
         </div>
       </div>
-      <div className={`transition-all duration-300 ease-in-out ${expandedCards[tipo] ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+      <div 
+        className={`transition-all duration-300 ease-in-out overflow-hidden`}
+        style={{ 
+          height: expandedCards[tipo] ? 'auto' : '0',
+          opacity: expandedCards[tipo] ? '1' : '0',
+          visibility: expandedCards[tipo] ? 'visible' : 'hidden'
+        }}
+      >
         <div className="p-4">
           {items.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
@@ -161,12 +168,12 @@ export default function ConsultarPage() {
                 <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-semibold text-lg">{item.sn}</h3>
+                      <h3 className="font-semibold text-lg break-all">{item.sn}</h3>
                       <p className="text-sm text-gray-600">
                         Patrimônio: {item.patrimonio || 'N/A'}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0">
                       <button 
                         title="Detalhes"
                         style={{ color: '#90EE90' }}
@@ -199,7 +206,7 @@ export default function ConsultarPage() {
                     </div>
                     <div>
                       <span className="text-gray-600">Ocomon:</span>
-                      <p>{item.ocomon}</p>
+                      <p className="break-all">{item.ocomon}</p>
                     </div>
                     <div>
                       <span className="text-gray-600">Técnico:</span>
@@ -297,27 +304,31 @@ export default function ConsultarPage() {
       </div>
 
       {perifericos.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CardPeriferico 
-            titulo="Câmeras" 
-            tipo="Câmera"
-            items={perifericos.filter(p => p.tipo === 'Câmera')} 
-          />
-          <CardPeriferico 
-            titulo="Leitores de Cartão" 
-            tipo="Leitor de Cartão"
-            items={perifericos.filter(p => p.tipo === 'Leitor de Cartão')} 
-          />
-          <CardPeriferico 
-            titulo="Leitores de E-CPF" 
-            tipo="Leitor de E-CPF"
-            items={perifericos.filter(p => p.tipo === 'Leitor de E-CPF')} 
-          />
-          <CardPeriferico 
-            titulo="Dispositivos de Biometria" 
-            tipo="Biometria"
-            items={perifericos.filter(p => p.tipo === 'Biometria')} 
-          />
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CardPeriferico 
+              titulo="Câmeras" 
+              tipo="Câmera"
+              items={perifericos.filter(p => p.tipo === 'Câmera')} 
+            />
+            <CardPeriferico 
+              titulo="Leitores de Cartão" 
+              tipo="Leitor de Cartão"
+              items={perifericos.filter(p => p.tipo === 'Leitor de Cartão')} 
+            />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <CardPeriferico 
+              titulo="Leitores de E-CPF" 
+              tipo="Leitor de E-CPF"
+              items={perifericos.filter(p => p.tipo === 'Leitor de E-CPF')} 
+            />
+            <CardPeriferico 
+              titulo="Dispositivos de Biometria" 
+              tipo="Biometria"
+              items={perifericos.filter(p => p.tipo === 'Biometria')} 
+            />
+          </div>
         </div>
       )}
     </div>
