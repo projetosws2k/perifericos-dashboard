@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiCamera, FiCreditCard, FiUserCheck, FiBox, FiTrash2, FiUpload, FiDownload, FiPlus, FiArrowLeft, FiFile } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
+import Link from 'next/link';
 
 type PeripheralType = 'camera' | 'card-reader' | 'ecpf' | 'biometrics' | 'stock' | 'disposal';
 type MotivoDaTroca = 'Ponto Novo' | 'Aparelho com Problema' | 'Exigencia do local';
@@ -250,23 +251,12 @@ export default function CadastrarPage() {
 
   const handleDisposalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      sn: formData.get('sn') as string,
-      tipo: formData.get('tipo') as TipoPeriferico,
-      data: formData.get('data') as string,
-      ocomon: formData.get('ocomon') as string,
-      motivo: formData.get('motivo') as MotivoDescarte,
-      observacao: formData.get('observacao') as string
-    };
-
-    const newDisposalItems = [...disposalItems, data];
-    setDisposalItems(newDisposalItems);
-    localStorage.setItem('disposalItems', JSON.stringify(newDisposalItems));
-
-    alert('Item de descarte cadastrado com sucesso!');
-    (e.target as HTMLFormElement).reset();
+    const currentItems = JSON.parse(localStorage.getItem('disposalItems') || '[]');
+    const updatedItems = [...currentItems, ...disposalItems];
+    localStorage.setItem('disposalItems', JSON.stringify(updatedItems));
+    setDisposalItems(updatedItems);
+    setDisposalMode(null);
+    alert('Itens descartados salvos com sucesso!');
   };
 
   const addBatchItem = () => {
@@ -429,8 +419,8 @@ export default function CadastrarPage() {
     if (stockMode === null) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => setStockMode('manual')}
+          <Link 
+            href="/cadastrar/adicionar"
             className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col items-center space-y-3"
           >
             <FiPlus className="w-8 h-8 text-primary" />
@@ -438,7 +428,7 @@ export default function CadastrarPage() {
             <p className="text-sm text-gray-500 text-center">
               Cadastre vários periféricos de uma vez
             </p>
-          </button>
+          </Link>
 
           <button
             onClick={() => setStockMode('import')}
@@ -635,8 +625,8 @@ export default function CadastrarPage() {
     if (disposalMode === null) {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button
-            onClick={() => setDisposalMode('manual')}
+          <Link 
+            href="/cadastrar/descarte"
             className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all flex flex-col items-center space-y-3"
           >
             <FiPlus className="w-8 h-8 text-primary" />
@@ -644,7 +634,7 @@ export default function CadastrarPage() {
             <p className="text-sm text-gray-500 text-center">
               Cadastre vários periféricos para descarte
             </p>
-          </button>
+          </Link>
 
           <button
             onClick={() => setDisposalMode('import')}
