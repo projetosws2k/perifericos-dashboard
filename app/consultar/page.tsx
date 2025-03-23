@@ -1,182 +1,250 @@
 'use client';
 
 import { useState } from 'react';
-import { FiSearch, FiEdit2, FiTrash2, FiEye } from 'react-icons/fi';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FiInfo, FiEdit2, FiTrash2 } from 'react-icons/fi';
 
-interface Peripheral {
-  id: string;
-  type: string;
-  model: string;
-  serialNumber: string;
-  installDate: string;
-  status: 'installed' | 'stock' | 'disposed';
+interface Periferico {
+  sn: string;
+  tipo: 'Câmera' | 'Leitor de Cartão' | 'Leitor de E-CPF' | 'Biometria';
+  data: string;
+  ocomon: string;
+  tecnico: string;
+  uncp: string;
+  status: string;
+  patrimonio?: string;
+  local?: string;
 }
+
+// Dados de exemplo para teste
+const dadosExemplo = [
+  {
+    sn: "CAM123",
+    tipo: "Câmera",
+    data: "2024-03-25",
+    ocomon: "OCO123",
+    tecnico: "João Silva",
+    uncp: "58",
+    status: "instalado",
+    patrimonio: "PAT123",
+    local: "Sala 1"
+  }
+];
 
 export default function ConsultarPage() {
   const [uncp, setUncp] = useState('');
-  const [results, setResults] = useState<Peripheral[]>([]);
+  const [perifericos, setPerifericos] = useState<Periferico[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Temporary mock data
-    setTimeout(() => {
-      setResults([
-        {
-          id: '1',
-          type: 'Câmera',
-          model: 'Logitech C920',
-          serialNumber: 'LGT123456',
-          installDate: '2025-03-21',
-          status: 'installed'
-        }
-      ]);
-      setIsLoading(false);
-    }, 500);
+  // Função para adicionar dados de teste
+  const adicionarDadosTeste = () => {
+    localStorage.setItem('perifericos', JSON.stringify(dadosExemplo));
+    toast.success('Dados de teste adicionados');
+    console.log('Dados adicionados ao localStorage:', dadosExemplo);
   };
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'installed':
-        return 'bg-green-100 text-green-800';
-      case 'stock':
-        return 'bg-blue-100 text-blue-800';
-      case 'disposed':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  const buscarPerifericos = () => {
+    if (!uncp.trim()) {
+      toast.error('Por favor, digite o número da UNCP');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Buscar dados do localStorage
+      const perifericosStorage = localStorage.getItem('perifericos');
+      console.log('Conteúdo bruto do localStorage:', perifericosStorage);
+
+      if (!perifericosStorage) {
+        console.log('Nenhum dado encontrado no localStorage');
+        toast.error('Nenhum dado encontrado no sistema');
+        setIsLoading(false);
+        return;
+      }
+
+      const todosPerifericosInstalados = JSON.parse(perifericosStorage);
+      console.log('Dados parseados:', todosPerifericosInstalados);
+
+      // Normaliza o número da UNCP removendo zeros à esquerda
+      const uncpNormalizado = uncp.trim().replace(/^0+/, '');
+      console.log('UNCP buscada (normalizada):', uncpNormalizado);
+
+      // Filtra os periféricos
+      const perifericosDaUncp = todosPerifericosInstalados.filter((p: Periferico) => {
+        const uncpPerifericoNormalizado = String(p.uncp).replace(/^0+/, '');
+        console.log('Comparando:', {
+          'UNCP do periférico': uncpPerifericoNormalizado,
+          'UNCP buscada': uncpNormalizado,
+          'Corresponde?': uncpPerifericoNormalizado === uncpNormalizado
+        });
+        return uncpPerifericoNormalizado === uncpNormalizado;
+      });
+
+      console.log('Periféricos encontrados:', perifericosDaUncp);
+
+      if (perifericosDaUncp.length === 0) {
+        toast.info('Nenhum periférico encontrado para esta UNCP');
+      } else {
+        toast.success(`${perifericosDaUncp.length} periférico(s) encontrado(s)`);
+        setPerifericos(perifericosDaUncp);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar periféricos:', error);
+      toast.error('Erro ao buscar periféricos');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getStatusText = (status: string) => {
-    const statusMap = {
-      installed: 'Instalado',
-      stock: 'Em Estoque',
-      disposed: 'Descartado'
-    };
-    return statusMap[status as keyof typeof statusMap] || status;
+  const formatarData = (data: string) => {
+    return new Date(data).toLocaleDateString('pt-BR');
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-          Consultar Periféricos
-        </h1>
-
-        <form onSubmit={handleSearch} className="max-w-md mb-8">
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label htmlFor="uncp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                UNCP
-              </label>
-              <input
-                type="text"
-                id="uncp"
-                value={uncp}
-                onChange={(e) => setUncp(e.target.value)}
-                pattern="[0-9]{4}"
-                maxLength={4}
-                placeholder="Digite o número da UNCP"
-                className="input-field"
-                required
-              />
-            </div>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                className="btn-primary flex items-center gap-2"
-                disabled={isLoading}
-              >
-                <FiSearch className="w-4 h-4" />
-                {isLoading ? 'Buscando...' : 'Buscar'}
-              </button>
-            </div>
-          </div>
-        </form>
-
-        {results.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Tipo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Modelo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Número de Série
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Data de Instalação
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {results.map((peripheral) => (
-                  <tr key={peripheral.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {peripheral.type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {peripheral.model}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {peripheral.serialNumber}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {new Date(peripheral.installDate).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(peripheral.status)}`}>
-                        {getStatusText(peripheral.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      <div className="flex gap-2">
-                        <button
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="Ver detalhes"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                          title="Editar"
-                        >
-                          <FiEdit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                          title="Excluir"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {results.length === 0 && !isLoading && uncp && (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            Nenhum periférico encontrado para esta UNCP.
+  const CardPeriferico = ({ titulo, tipo, items }: { 
+    titulo: string; 
+    tipo: string; 
+    items: Periferico[] 
+  }) => (
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div style={{ backgroundColor: '#90EE90' }} className="p-4">
+        <h2 className="text-xl font-bold text-white flex items-center justify-between">
+          {titulo}
+          <span className="text-sm bg-white px-2 py-1 rounded-full" style={{ color: '#90EE90' }}>
+            {items.length}
+          </span>
+        </h2>
+      </div>
+      <div className="p-4">
+        {items.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">
+            Nenhum {tipo.toLowerCase()} instalado
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {items.map((item, index) => (
+              <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-semibold text-lg">{item.sn}</h3>
+                    <p className="text-sm text-gray-600">
+                      Patrimônio: {item.patrimonio || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      title="Detalhes"
+                      style={{ color: '#90EE90' }}
+                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                      onClick={() => toast.info(`Detalhes de ${item.sn}`)}
+                    >
+                      <FiInfo size={16} />
+                    </button>
+                    <button 
+                      title="Editar"
+                      style={{ color: '#90EE90' }}
+                      className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+                      onClick={() => toast.info(`Editar ${item.sn}`)}
+                    >
+                      <FiEdit2 size={16} />
+                    </button>
+                    <button 
+                      title="Remover"
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                      onClick={() => toast.info(`Remover ${item.sn}`)}
+                    >
+                      <FiTrash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-gray-600">Data:</span>
+                    <p>{formatarData(item.data)}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Ocomon:</span>
+                    <p>{item.ocomon}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Técnico:</span>
+                    <p>{item.tecnico}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Local:</span>
+                    <p>{item.local || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+    </div>
+  );
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      <ToastContainer theme="light" />
+      
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold mb-6">Consultar Periféricos por UNCP</h1>
+        
+        <button 
+          onClick={adicionarDadosTeste}
+          style={{ backgroundColor: '#90EE90' }}
+          className="mb-4 px-4 py-2 text-white rounded-lg transition-opacity hover:opacity-80"
+        >
+          Adicionar Dados de Teste
+        </button>
+
+        <div className="flex gap-4 max-w-md">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-1">UNCP</label>
+            <input 
+              type="text"
+              placeholder="Digite o número da UNCP (ex: 0058)"
+              className="w-full p-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#90EE90] focus:border-[#90EE90]"
+              value={uncp}
+              onChange={(e) => setUncp(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && buscarPerifericos()}
+            />
+          </div>
+          <button 
+            style={{ backgroundColor: '#90EE90' }}
+            className="self-end px-6 py-2 text-white rounded-lg transition-opacity hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={buscarPerifericos}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Buscando...' : 'Buscar'}
+          </button>
+        </div>
+      </div>
+
+      {perifericos.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CardPeriferico 
+            titulo="Câmeras" 
+            tipo="Câmera"
+            items={perifericos.filter(p => p.tipo === 'Câmera')} 
+          />
+          <CardPeriferico 
+            titulo="Leitores de Cartão" 
+            tipo="Leitor de Cartão"
+            items={perifericos.filter(p => p.tipo === 'Leitor de Cartão')} 
+          />
+          <CardPeriferico 
+            titulo="Leitores de E-CPF" 
+            tipo="Leitor de E-CPF"
+            items={perifericos.filter(p => p.tipo === 'Leitor de E-CPF')} 
+          />
+          <CardPeriferico 
+            titulo="Dispositivos de Biometria" 
+            tipo="Biometria"
+            items={perifericos.filter(p => p.tipo === 'Biometria')} 
+          />
+        </div>
+      )}
     </div>
   );
 }
