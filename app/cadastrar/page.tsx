@@ -1058,6 +1058,15 @@ export default function CadastrarPage() {
             readOnly
           />
         </div>
+
+        <div className="pt-4">
+          <button
+            type="submit"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            Cadastrar
+          </button>
+        </div>
       </>
     );
   };
@@ -1079,15 +1088,6 @@ export default function CadastrarPage() {
 
           {/* Formulário de Descarte */}
           {selectedType === 'disposal' && renderDisposalFormFinal()}
-
-          <div className="pt-4">
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              Cadastrar
-            </button>
-          </div>
         </div>
       </form>
     );
