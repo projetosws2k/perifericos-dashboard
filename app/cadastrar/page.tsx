@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiCamera, FiCreditCard, FiUserCheck, FiBox, FiTrash2, FiUpload, FiDownload, FiPlus, FiArrowLeft, FiFile } from 'react-icons/fi';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
@@ -43,35 +43,31 @@ export default function CadastrarPage() {
   const [disposalMode, setDisposalMode] = useState<'manual' | 'import' | null>(null);
   
   // Estados para cada tipo de periférico
-  const [cameraItems, setCameraItems] = useState<PeripheralItem[]>(() => {
-    const saved = localStorage.getItem('cameraItems');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [cardReaderItems, setCardReaderItems] = useState<PeripheralItem[]>(() => {
-    const saved = localStorage.getItem('cardReaderItems');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [ecpfItems, setEcpfItems] = useState<PeripheralItem[]>(() => {
-    const saved = localStorage.getItem('ecpfItems');
-    return saved ? JSON.parse(saved) : [];
-  });
-  
-  const [biometricsItems, setBiometricsItems] = useState<PeripheralItem[]>(() => {
-    const saved = localStorage.getItem('biometricsItems');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [cameraItems, setCameraItems] = useState<PeripheralItem[]>([]);
+  const [cardReaderItems, setCardReaderItems] = useState<PeripheralItem[]>([]);
+  const [ecpfItems, setEcpfItems] = useState<PeripheralItem[]>([]);
+  const [biometricsItems, setBiometricsItems] = useState<PeripheralItem[]>([]);
+  const [stockItems, setStockItems] = useState<BatchItem[]>([]);
+  const [disposalItems, setDisposalItems] = useState<DisposalItem[]>([]);
 
-  const [stockItems, setStockItems] = useState<BatchItem[]>(() => {
-    const saved = localStorage.getItem('stockItems');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Carregar dados do localStorage quando o componente for montado
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedCameraItems = localStorage.getItem('cameraItems');
+      const savedCardReaderItems = localStorage.getItem('cardReaderItems');
+      const savedEcpfItems = localStorage.getItem('ecpfItems');
+      const savedBiometricsItems = localStorage.getItem('biometricsItems');
+      const savedStockItems = localStorage.getItem('stockItems');
+      const savedDisposalItems = localStorage.getItem('disposalItems');
 
-  const [disposalItems, setDisposalItems] = useState<DisposalItem[]>(() => {
-    const saved = localStorage.getItem('disposalItems');
-    return saved ? JSON.parse(saved) : [];
-  });
+      if (savedCameraItems) setCameraItems(JSON.parse(savedCameraItems));
+      if (savedCardReaderItems) setCardReaderItems(JSON.parse(savedCardReaderItems));
+      if (savedEcpfItems) setEcpfItems(JSON.parse(savedEcpfItems));
+      if (savedBiometricsItems) setBiometricsItems(JSON.parse(savedBiometricsItems));
+      if (savedStockItems) setStockItems(JSON.parse(savedStockItems));
+      if (savedDisposalItems) setDisposalItems(JSON.parse(savedDisposalItems));
+    }
+  }, []);
 
   // Simular usuário logado - Depois será integrado com autenticação
   const loggedInUser = "Técnico Exemplo";
@@ -254,12 +250,23 @@ export default function CadastrarPage() {
 
   const handleDisposalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const currentItems = JSON.parse(localStorage.getItem('disposalItems') || '[]');
-    const updatedItems = [...currentItems, ...disposalItems];
-    localStorage.setItem('disposalItems', JSON.stringify(updatedItems));
-    setDisposalItems(updatedItems);
-    setDisposalMode(null);
-    alert('Itens descartados salvos com sucesso!');
+    
+    const formData = new FormData(e.target as HTMLFormElement);
+    const data = {
+      sn: formData.get('sn') as string,
+      tipo: formData.get('tipo') as TipoPeriferico,
+      data: formData.get('data') as string,
+      ocomon: formData.get('ocomon') as string,
+      motivo: formData.get('motivo') as MotivoDescarte,
+      observacao: formData.get('observacao') as string
+    };
+
+    const newDisposalItems = [...disposalItems, data];
+    setDisposalItems(newDisposalItems);
+    localStorage.setItem('disposalItems', JSON.stringify(newDisposalItems));
+
+    alert('Item de descarte cadastrado com sucesso!');
+    (e.target as HTMLFormElement).reset();
   };
 
   const addBatchItem = () => {
