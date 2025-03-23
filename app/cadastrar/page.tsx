@@ -5,6 +5,8 @@ import { FiCamera, FiCreditCard, FiUserCheck, FiBox, FiTrash2, FiUpload, FiDownl
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import Link from 'next/link';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type PeripheralType = 'camera' | 'card-reader' | 'ecpf' | 'biometrics' | 'stock' | 'disposal';
 type MotivoDaTroca = 'Ponto Novo' | 'Aparelho com Problema' | 'Exigencia do local';
@@ -42,6 +44,7 @@ export default function CadastrarPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [stockMode, setStockMode] = useState<StockMode>(null);
   const [disposalMode, setDisposalMode] = useState<'manual' | 'import' | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Estados para cada tipo de periférico
   const [cameraItems, setCameraItems] = useState<PeripheralItem[]>([]);
@@ -134,38 +137,59 @@ export default function CadastrarPage() {
   };
 
   const handleFileUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      toast.error('Por favor, selecione um arquivo para importar');
+      return;
+    }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = e.target?.result;
-      const workbook = XLSX.read(data, { type: 'binary' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet);
+    setIsLoading(true);
+    
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = e.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet);
 
-      if (selectedType === 'stock') {
-        const items = json.map((item: any) => ({
-          sn: item.SN || '',
-          tipo: item.Tipo || 'Câmera',
-          data: item.Data || '',
-          ocomon: item.Ocomon || '',
-        }));
-        setStockItems([...stockItems, ...items]);
-      } else if (selectedType === 'disposal') {
-        const items = json.map((item: any) => ({
-          sn: item.SN || '',
-          tipo: item.Tipo || 'Câmera',
-          data: item.Data || '',
-          ocomon: item.Ocomon || '',
-          motivo: item.Motivo || 'Defeito Irreparável',
-          observacao: item.Observacao || '',
-        }));
-        setDisposalItems([...disposalItems, ...items]);
-      }
-    };
+        if (selectedType === 'stock') {
+          const items = json.map((item: any) => ({
+            sn: item.SN || '',
+            tipo: item.Tipo || 'Câmera',
+            data: item.Data || '',
+            ocomon: item.Ocomon || '',
+          }));
+          setStockItems([...stockItems, ...items]);
+          toast.success('Periféricos importados com sucesso!');
+        } else if (selectedType === 'disposal') {
+          const items = json.map((item: any) => ({
+            sn: item.SN || '',
+            tipo: item.Tipo || 'Câmera',
+            data: item.Data || '',
+            ocomon: item.Ocomon || '',
+            motivo: item.Motivo || 'Defeito Irreparável',
+            observacao: item.Observacao || '',
+          }));
+          setDisposalItems([...disposalItems, ...items]);
+          toast.success('Periféricos importados com sucesso!');
+        }
 
-    reader.readAsBinaryString(selectedFile);
+        setSelectedFile(null);
+        const fileInput = document.getElementById('fileUpload') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+      };
+
+      reader.onerror = () => {
+        toast.error('Erro ao ler o arquivo. Tente novamente.');
+      };
+
+      reader.readAsBinaryString(selectedFile);
+    } catch (error) {
+      toast.error('Ocorreu um erro durante a importação');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const downloadExcelTemplate = () => {
@@ -194,45 +218,47 @@ export default function CadastrarPage() {
       observacao: formData.get('observacao') as string
     };
 
-    // Salvar no estado apropriado baseado no tipo selecionado
-    switch (selectedType) {
-      case 'camera':
-        const newCameraItems = [...cameraItems, data];
-        setCameraItems(newCameraItems);
-        localStorage.setItem('cameraItems', JSON.stringify(newCameraItems));
-        break;
-      case 'card-reader':
-        const newCardItems = [...cardReaderItems, data];
-        setCardReaderItems(newCardItems);
-        localStorage.setItem('cardReaderItems', JSON.stringify(newCardItems));
-        break;
-      case 'ecpf':
-        const newEcpfItems = [...ecpfItems, data];
-        setEcpfItems(newEcpfItems);
-        localStorage.setItem('ecpfItems', JSON.stringify(newEcpfItems));
-        break;
-      case 'biometrics':
-        const newBioItems = [...biometricsItems, data];
-        setBiometricsItems(newBioItems);
-        localStorage.setItem('biometricsItems', JSON.stringify(newBioItems));
-        break;
-    }
+    try {
+      switch (selectedType) {
+        case 'camera':
+          const newCameraItems = [...cameraItems, data];
+          setCameraItems(newCameraItems);
+          localStorage.setItem('cameraItems', JSON.stringify(newCameraItems));
+          break;
+        case 'card-reader':
+          const newCardItems = [...cardReaderItems, data];
+          setCardReaderItems(newCardItems);
+          localStorage.setItem('cardReaderItems', JSON.stringify(newCardItems));
+          break;
+        case 'ecpf':
+          const newEcpfItems = [...ecpfItems, data];
+          setEcpfItems(newEcpfItems);
+          localStorage.setItem('ecpfItems', JSON.stringify(newEcpfItems));
+          break;
+        case 'biometrics':
+          const newBioItems = [...biometricsItems, data];
+          setBiometricsItems(newBioItems);
+          localStorage.setItem('biometricsItems', JSON.stringify(newBioItems));
+          break;
+      }
 
-    alert('Item cadastrado com sucesso!');
-    (e.target as HTMLFormElement).reset();
+      toast.success('Item cadastrado com sucesso!');
+      (e.target as HTMLFormElement).reset();
+    } catch (error) {
+      toast.error('Erro ao cadastrar item. Tente novamente.');
+    }
   };
 
   const handleStockSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (stockItems.length === 0) {
-      alert('Adicione pelo menos um item antes de salvar.');
+      toast.error('Adicione pelo menos um item antes de salvar.');
       return;
     }
 
-    // Garantir que todos os campos obrigatórios estão preenchidos
     const hasEmptyFields = stockItems.some(item => !item.sn || !item.tipo || !item.data || !item.ocomon);
     if (hasEmptyFields) {
-      alert('Por favor, preencha todos os campos obrigatórios antes de salvar.');
+      toast.error('Por favor, preencha todos os campos obrigatórios antes de salvar.');
       return;
     }
 
@@ -240,23 +266,27 @@ export default function CadastrarPage() {
       const currentItems = JSON.parse(localStorage.getItem('stockItems') || '[]');
       const updatedItems = [...currentItems, ...stockItems];
       localStorage.setItem('stockItems', JSON.stringify(updatedItems));
-      setStockItems(updatedItems); // Atualiza o estado com todos os itens
+      setStockItems(updatedItems);
       setStockMode(null);
-      alert('Itens salvos com sucesso!');
+      toast.success('Itens salvos com sucesso!');
     } catch (error) {
       console.error('Erro ao salvar itens:', error);
-      alert('Erro ao salvar os itens. Por favor, tente novamente.');
+      toast.error('Erro ao salvar os itens. Por favor, tente novamente.');
     }
   };
 
   const handleDisposalSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const currentItems = JSON.parse(localStorage.getItem('disposalItems') || '[]');
-    const updatedItems = [...currentItems, ...disposalItems];
-    localStorage.setItem('disposalItems', JSON.stringify(updatedItems));
-    setDisposalItems(updatedItems);
-    setDisposalMode(null);
-    alert('Itens descartados salvos com sucesso!');
+    try {
+      const currentItems = JSON.parse(localStorage.getItem('disposalItems') || '[]');
+      const updatedItems = [...currentItems, ...disposalItems];
+      localStorage.setItem('disposalItems', JSON.stringify(updatedItems));
+      setDisposalItems(updatedItems);
+      setDisposalMode(null);
+      toast.success('Itens descartados salvos com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao salvar os itens. Por favor, tente novamente.');
+    }
   };
 
   const addBatchItem = () => {
@@ -1158,6 +1188,29 @@ export default function CadastrarPage() {
 
       {renderForm()}
       {renderHistory()}
+
+      {/* Indicador de carregamento */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+            <p className="mt-2 text-gray-700">Importando periféricos...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Container de notificações */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
