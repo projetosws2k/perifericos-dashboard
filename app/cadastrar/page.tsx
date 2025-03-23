@@ -216,7 +216,10 @@ export default function CadastrarPage() {
       ocomon: formData.get('ocomon') as string,
       motivo: formData.get('motivo') as MotivoDaTroca,
       observacao: formData.get('observacao') as string,
-      tipo: 'Câmera' as TipoPeriferico,
+      tipo: selectedType === 'camera' ? 'Câmera' :
+            selectedType === 'card-reader' ? 'Leitor de Cartão' :
+            selectedType === 'ecpf' ? 'Leitor de E-CPF' :
+            'Biometria',
       tecnico: loggedInUser
     };
 
