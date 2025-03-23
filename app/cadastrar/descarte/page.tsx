@@ -11,17 +11,20 @@ interface DisposalItem {
   ocomon: string;
   motivo: 'Defeito Irreparável' | 'Obsolescência' | 'Dano Físico' | 'Fim da Vida Útil' | 'Outro';
   observacao: string;
+  tecnico: string;
 }
 
 export default function AdicionarDescartePage() {
   const router = useRouter();
+  const loggedInUser = "Técnico Exemplo"; // Simulando usuário logado
   const [items, setItems] = useState<DisposalItem[]>([{
     sn: '',
     tipo: 'Câmera',
     data: new Date().toISOString().split('T')[0],
     ocomon: '',
     motivo: 'Defeito Irreparável',
-    observacao: ''
+    observacao: '',
+    tecnico: loggedInUser
   }]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,7 +64,8 @@ export default function AdicionarDescartePage() {
       data: new Date().toISOString().split('T')[0],
       ocomon: '',
       motivo: 'Defeito Irreparável',
-      observacao: ''
+      observacao: '',
+      tecnico: loggedInUser
     }]);
   };
 
@@ -188,6 +192,18 @@ export default function AdicionarDescartePage() {
                   onChange={(e) => updateItem(index, 'observacao', e.target.value)}
                   className="w-full p-2 border rounded-md"
                   rows={3}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Técnico
+                </label>
+                <input
+                  type="text"
+                  value={loggedInUser}
+                  className="w-full p-2 border rounded-md bg-gray-100"
+                  readOnly
                 />
               </div>
             </div>

@@ -9,15 +9,18 @@ interface BatchItem {
   tipo: 'Leitor de Cartão' | 'Leitor de E-CPF' | 'Câmera' | 'Biometria';
   data: string;
   ocomon: string;
+  tecnico: string;
 }
 
 export default function AdicionarManualmentePage() {
   const router = useRouter();
+  const loggedInUser = "Técnico Exemplo"; // Simulando usuário logado
   const [items, setItems] = useState<BatchItem[]>([{
     sn: '',
     tipo: 'Câmera',
     data: new Date().toISOString().split('T')[0],
-    ocomon: ''
+    ocomon: '',
+    tecnico: loggedInUser
   }]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,7 +56,8 @@ export default function AdicionarManualmentePage() {
       sn: '',
       tipo: 'Câmera',
       data: new Date().toISOString().split('T')[0],
-      ocomon: ''
+      ocomon: '',
+      tecnico: loggedInUser
     }]);
   };
 
@@ -150,6 +154,18 @@ export default function AdicionarManualmentePage() {
                   onChange={(e) => updateItem(index, 'ocomon', e.target.value)}
                   className="w-full p-2 border rounded-md"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Técnico
+                </label>
+                <input
+                  type="text"
+                  value={loggedInUser}
+                  className="w-full p-2 border rounded-md bg-gray-100"
+                  readOnly
                 />
               </div>
             </div>
