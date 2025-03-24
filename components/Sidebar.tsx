@@ -8,7 +8,7 @@ const menuItems = [
   { href: '/dashboard', icon: FiHome, label: 'Dashboard' },
   { href: '/consultar', icon: FiSearch, label: 'Consultar' },
   { href: '/cadastrar', icon: FiPlusCircle, label: 'Cadastrar' },
-  { href: '/relatorio', icon: FiFileText, label: 'Relatório' },
+  { href: '/relatorios', icon: FiFileText, label: 'Relatório' },
   { href: '/configuracoes', icon: FiSettings, label: 'Configurações' },
   { href: '/sobre', icon: FiInfo, label: 'Sobre' },
 ];

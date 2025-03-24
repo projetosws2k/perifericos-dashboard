@@ -157,10 +157,16 @@ export default function CadastrarPage() {
           const items = json.map((item: any) => ({
             sn: item.SN || '',
             tipo: item.Tipo || 'Câmera',
-            data: item.Data || '',
+            data: new Date().toISOString().split('T')[0],
             ocomon: item.Ocomon || '',
           }));
-          setStockItems([...stockItems, ...items]);
+
+          // Recupera itens existentes e adiciona os novos
+          const existingItems = JSON.parse(localStorage.getItem('stockItems') || '[]');
+          const updatedItems = [...existingItems, ...items];
+          localStorage.setItem('stockItems', JSON.stringify(updatedItems));
+          setStockItems(updatedItems);
+          
           toast.success('Periféricos importados com sucesso!');
         } else if (selectedType === 'disposal') {
           const items = json.map((item: any) => ({
@@ -199,7 +205,7 @@ export default function CadastrarPage() {
     } else if (selectedType === 'disposal') {
       XLSX.utils.sheet_add_aoa(ws, [['SN', 'Tipo', 'Data', 'Ocomon', 'Motivo', 'Observacao']]);
     }
-
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Template');
     XLSX.writeFile(wb, `template_${selectedType}.xlsx`);
@@ -297,7 +303,7 @@ export default function CadastrarPage() {
   const addBatchItem = () => {
     const newItem = { 
       sn: '', 
-      tipo: 'camera' as TipoPeriferico, 
+      tipo: 'Câmera' as TipoPeriferico, 
       data: new Date().toISOString().split('T')[0],
       ocomon: '' 
     };
@@ -313,141 +319,7 @@ export default function CadastrarPage() {
   };
 
   const removeBatchItem = (index: number) => {
-    setStockItems(prev => prev.filter((_: BatchItem, i: number) => i !== index));
-  };
-
-  const renderHistory = () => {
-    if (!selectedType) return null;
-
-    let items: any[] = [];
-    let title = '';
-
-    switch (selectedType) {
-      case 'camera':
-        items = cameraItems.slice(-10).reverse(); // Últimos 10 itens, mais recentes primeiro
-        title = 'Histórico de Câmeras';
-        break;
-      case 'card-reader':
-        items = cardReaderItems.slice(-10).reverse();
-        title = 'Histórico de Leitores de Cartão';
-        break;
-      case 'ecpf':
-        items = ecpfItems.slice(-10).reverse();
-        title = 'Histórico de Leitores de E-CPF';
-        break;
-      case 'biometrics':
-        items = biometricsItems.slice(-10).reverse();
-        title = 'Histórico de Biometrias';
-        break;
-      case 'stock':
-        items = stockItems.slice(-10).reverse();
-        title = 'Histórico de Estoque';
-        break;
-      case 'disposal':
-        items = disposalItems.slice(-10).reverse();
-        title = 'Histórico de Descarte';
-        break;
-    }
-
-    if (items.length === 0) return null;
-
-    return (
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">{title} (Últimos 10 itens)</h2>
-        <div className="space-y-4">
-          {items.map((item, index) => (
-            <div key={index} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <span className="text-sm font-medium text-gray-500">SN/Patrimônio</span>
-                  <p>{item.sn}</p>
-                </div>
-                {item.uncp && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">UNCP</span>
-                    <p>{item.uncp}</p>
-                  </div>
-                )}
-                {item.tipo && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Tipo</span>
-                    <p>{item.tipo}</p>
-                  </div>
-                )}
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Data</span>
-                  <p>{item.data}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Ocomon</span>
-                  <p>{item.ocomon}</p>
-                </div>
-                {item.motivo && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-500">Motivo</span>
-                    <p>{item.motivo}</p>
-                  </div>
-                )}
-                {item.observacao && (
-                  <div className="col-span-full">
-                    <span className="text-sm font-medium text-gray-500">Observação</span>
-                    <p className="mt-1 text-sm">{item.observacao}</p>
-                  </div>
-                )}
-              </div>
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => {
-                    let allItems: any[];
-                    switch (selectedType) {
-                      case 'camera':
-                        allItems = JSON.parse(localStorage.getItem('cameraItems') || '[]');
-                        allItems = allItems.filter((_: PeripheralItem, i: number) => i !== allItems.length - 1 - index);
-                        setCameraItems(allItems);
-                        localStorage.setItem('cameraItems', JSON.stringify(allItems));
-                        break;
-                      case 'card-reader':
-                        allItems = JSON.parse(localStorage.getItem('cardReaderItems') || '[]');
-                        allItems = allItems.filter((_: PeripheralItem, i: number) => i !== allItems.length - 1 - index);
-                        setCardReaderItems(allItems);
-                        localStorage.setItem('cardReaderItems', JSON.stringify(allItems));
-                        break;
-                      case 'ecpf':
-                        allItems = JSON.parse(localStorage.getItem('ecpfItems') || '[]');
-                        allItems = allItems.filter((_: PeripheralItem, i: number) => i !== allItems.length - 1 - index);
-                        setEcpfItems(allItems);
-                        localStorage.setItem('ecpfItems', JSON.stringify(allItems));
-                        break;
-                      case 'biometrics':
-                        allItems = JSON.parse(localStorage.getItem('biometricsItems') || '[]');
-                        allItems = allItems.filter((_: PeripheralItem, i: number) => i !== allItems.length - 1 - index);
-                        setBiometricsItems(allItems);
-                        localStorage.setItem('biometricsItems', JSON.stringify(allItems));
-                        break;
-                      case 'stock':
-                        allItems = JSON.parse(localStorage.getItem('stockItems') || '[]');
-                        allItems = allItems.filter((_: BatchItem, i: number) => i !== allItems.length - 1 - index);
-                        setStockItems(allItems);
-                        localStorage.setItem('stockItems', JSON.stringify(allItems));
-                        break;
-                      case 'disposal':
-                        allItems = JSON.parse(localStorage.getItem('disposalItems') || '[]');
-                        allItems = allItems.filter((_: DisposalItem, i: number) => i !== allItems.length - 1 - index);
-                        setDisposalItems(allItems);
-                        localStorage.setItem('disposalItems', JSON.stringify(allItems));
-                        break;
-                    }
-                  }}
-                  className="text-red-500 hover:text-red-600 text-sm font-medium"
-                >
-                  Remover
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    setStockItems(prev => prev.filter((_, i) => i !== index));
   };
 
   const renderStockOptions = () => {
@@ -475,6 +347,70 @@ export default function CadastrarPage() {
               Importe dados de uma planilha Excel
             </p>
           </button>
+        </div>
+      );
+    }
+
+    if (stockMode === 'import') {
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Importar Periféricos</h2>
+            <button
+              onClick={() => {
+                setStockMode(null);
+                setSelectedType(null);
+              }}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <FiArrowLeft className="w-4 h-4" />
+              <span>Voltar</span>
+            </button>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div className="space-y-4">
+              <div>
+                <label 
+                  htmlFor="fileUpload"
+                  className="block w-full cursor-pointer bg-white dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-primary transition-colors"
+                >
+                  <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
+                  <span className="mt-2 block text-sm font-medium text-gray-600 dark:text-gray-300">
+                    {selectedFile ? selectedFile.name : 'Clique ou arraste o arquivo Excel para importar'}
+                  </span>
+                  <input
+                    id="fileUpload"
+                    type="file"
+                    className="hidden"
+                    accept=".xlsx,.xls,.csv"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={handleFileUpload}
+                  disabled={!selectedFile}
+                  className={`flex-1 py-2 px-4 rounded-md text-white font-medium flex items-center justify-center space-x-2 transition-colors ${
+                    selectedFile ? 'bg-primary hover:bg-primary-dark' : 'bg-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <FiUpload className="w-5 h-5" />
+                  <span>Importar Periféricos</span>
+                </button>
+
+                <button
+                  onClick={downloadExcelTemplate}
+                  className="flex-1 flex items-center justify-center space-x-2 py-2 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
+                >
+                  <FiDownload className="w-5 h-5" />
+                  <span>Baixar Modelo</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -508,14 +444,15 @@ export default function CadastrarPage() {
                 </label>
                 <select
                   value={item.tipo}
-                  onChange={(e) => updateBatchItem(index, 'tipo', e.target.value)}
+                  onChange={(e) => updateBatchItem(index, 'tipo', e.target.value as TipoPeriferico)}
                   required
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
                 >
-                  <option value="camera">Câmera</option>
-                  <option value="card-reader">Leitor de Cartão</option>
-                  <option value="ecpf">Leitor de E-CPF</option>
-                  <option value="biometrics">Biometria</option>
+                  {tiposPeriferico.map((tipo) => (
+                    <option key={tipo} value={tipo}>
+                      {tipo}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -574,84 +511,11 @@ export default function CadastrarPage() {
     );
   };
 
-  const renderImportForm = () => {
-    if (stockMode !== 'import') return null;
-
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Importar Planilha</h2>
-          <button
-            onClick={() => setStockMode(null)}
-            className="flex items-center space-x-2 text-primary hover:text-primary-dark transition-colors"
-          >
-            <FiArrowLeft className="w-4 h-4" />
-            <span>Voltar</span>
-          </button>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-          <div className="space-y-4">
-            <div>
-              <label 
-                htmlFor="fileUpload"
-                className="block w-full cursor-pointer bg-white dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-primary transition-colors"
-              >
-                <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
-                <span className="mt-2 block text-sm font-medium text-gray-600 dark:text-gray-300">
-                  {selectedFile ? selectedFile.name : 'Clique ou arraste o arquivo Excel para importar'}
-                </span>
-                <span className="mt-1 block text-xs text-gray-500">
-                  Formatos aceitos: .xlsx, .xls, .csv
-                </span>
-                <input
-                  id="fileUpload"
-                  type="file"
-                  className="hidden"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileChange}
-                />
-              </label>
-            </div>
-            <button
-              onClick={handleFileUpload}
-              disabled={!selectedFile}
-              className={`w-full py-2 px-4 rounded-md text-white font-medium flex items-center justify-center space-x-2 transition-colors ${
-                selectedFile
-                  ? 'bg-primary hover:bg-primary-dark'
-                  : 'bg-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <FiUpload className="w-5 h-5" />
-              <span>Importar Periféricos</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">Baixar Modelo da Planilha</h2>
-          <button
-            onClick={downloadExcelTemplate}
-            className="w-full flex items-center justify-center space-x-2 py-3 px-4 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
-          >
-            <FiDownload className="w-5 h-5" />
-            <span>Baixar Planilha Modelo</span>
-          </button>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Baixe o modelo de planilha para importação em lote de periféricos.
-            A planilha deve conter as colunas: SN/Patrimônio, Tipo de Periférico, Data e Número do Ocomon.
-          </p>
-        </div>
-      </div>
-    );
-  };
-
   const renderStockForm = () => {
     return (
       <div className="space-y-6">
         {renderStockOptions()}
         {renderManualBatchForm()}
-        {renderImportForm()}
       </div>
     );
   };
@@ -1192,7 +1056,6 @@ export default function CadastrarPage() {
       </div>
 
       {renderForm()}
-      {renderHistory()}
 
       {/* Indicador de carregamento */}
       {isLoading && (
